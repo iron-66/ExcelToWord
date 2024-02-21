@@ -21,6 +21,7 @@ namespace ExcelToWord
     public partial class iron66 : Form
     {
         public string SelectedFilePath;
+        public string City;
 
         public iron66()
         {
@@ -35,10 +36,22 @@ namespace ExcelToWord
         }
 
         // Извлечение информации о доставке
-        private string ExtractDeliveryInfo(string text)
+        private string ExtractDeliveryInfo(string text, dynamic deliveryInfo)
         {
-            Match match = Regex.Match(text, @"\.(.*?)$");
-            return match.Success ? match.Groups[1].Value.Trim() : null;
+            string cityText = deliveryInfo;
+            if (cityText.Contains("Бравиум") || cityText.Contains("БРАВИУМ") ||
+            cityText.Contains("Меделия") || cityText.Contains("МЕДЕЛИЯ") ||
+            cityText.Contains("ДСД Проект") || cityText.Contains("Зерц") ||
+            cityText.Contains("Бурдонов"))
+            {
+                City = "Москва";
+                return "М";
+            }
+            else
+            {
+                Match match = Regex.Match(text, @"\.(.*?)$");
+                return match.Success ? match.Groups[1].Value.Trim() : null;
+            }
         }
 
         // Извлечение информации о заказчике
@@ -50,6 +63,11 @@ namespace ExcelToWord
         // Извлечение информации о городе доставки
         private string ExtractCityInfo(string text)
         {
+            if (City == "Москва")
+            {
+                return City;
+            }
+
             Match match = Regex.Match(text, @", г[ .]([А-Яа-я\s\-]+),");
             return match.Success ? match.Groups[1].Value.Trim() : null;
         }
@@ -163,7 +181,7 @@ namespace ExcelToWord
                 string order_str = (orderStrCell != null) ? orderStrCell.ToString() : string.Empty;
 
                 order_id = ExtractOrderId(order_id_str);
-                string delivery_info = ExtractDeliveryInfo(order_id_str);
+                string delivery_info = ExtractDeliveryInfo(order_id_str, sheet.Cells[7, 6].Value);
                 string customer = ExtractCustomer(order_str);
                 string city_info = ExtractCityInfo(order_str);
                 int quantityColumn = FindQuantityColumn(sheet);
@@ -225,7 +243,7 @@ namespace ExcelToWord
                             Word.Range productNameRun = productNameParagraph.Range;
                             productNameRun.Text = "Наименование: ";
                             cityRun.Font.Size = 24;
-                            //productNameParagraph.Range.InsertParagraphAfter();
+                            productNameParagraph.Range.InsertParagraphAfter();
 
                             Word.Paragraph productParagraph = document.Content.Paragraphs.Add();
                             Word.Range productRun = productParagraph.Range;
