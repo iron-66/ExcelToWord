@@ -145,6 +145,7 @@ namespace ExcelToWord
 
             // Переход вправо, учитывая объединение ячеек
             otherCell = otherCell.MergeArea[otherCell.MergeArea.Rows.Count, otherCell.MergeArea.Columns.Count];
+            Console.WriteLine(otherCell.Text);
             otherCell = sheet.Cells[otherCell.Row, otherCell.Column + 1];
 
             if (otherCell.Value == null)
@@ -188,8 +189,6 @@ namespace ExcelToWord
                             }
                         }
 
-
-
                         for (int i = 0; i < quantity; i++)
                         {
                             // Счёт
@@ -224,9 +223,9 @@ namespace ExcelToWord
                             // Наименование
                             Word.Paragraph productNameParagraph = document.Content.Paragraphs.Add();
                             Word.Range productNameRun = productNameParagraph.Range;
-                            productNameRun.Text = "Наименование:";
+                            productNameRun.Text = "Наименование: ";
                             cityRun.Font.Size = 24;
-                            productNameParagraph.Range.InsertParagraphAfter();
+                            //productNameParagraph.Range.InsertParagraphAfter();
 
                             Word.Paragraph productParagraph = document.Content.Paragraphs.Add();
                             Word.Range productRun = productParagraph.Range;
@@ -287,6 +286,10 @@ namespace ExcelToWord
                     break;
                 }
             }
+
+            // Получение ячейки, которая находится на 2 пункта ниже таблицы
+            Excel.Range belowCell = sheet.Cells[currentRow + 3, 2];
+            Console.WriteLine(belowCell.Text);          
 
             string outputFileName = $"Заказ {order_id}.docx";
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
