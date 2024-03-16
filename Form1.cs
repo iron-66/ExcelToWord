@@ -60,16 +60,40 @@ namespace ExcelToWord
             return text.Split(',')[0].Trim();
         }
 
-        // Извлечение информации о городе доставки
-        private string ExtractCityInfo(string text)
+        private List<string> LoadCitiesFromFile(string filePath)
         {
-            if (City == "Москва")
+            List<string> cities = new List<string>();
+
+            try
             {
-                return City;
+                // Чтение всех строк из файла и добавление их в список городов
+                cities = File.ReadAllLines(filePath, Encoding.UTF8).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при чтении файла городов: {ex.Message}");
             }
 
-            Match match = Regex.Match(text, @", г[ .]([А-Яа-я\s\-]+),");
-            return match.Success ? match.Groups[1].Value.Trim() : null;
+            return cities;
+        }
+
+        private string ExtractCityInfo(string text)
+        {
+            string citiesFilePath = "City.txt"; // Путь к файлу с городами
+            List<string> knownCities = LoadCitiesFromFile(citiesFilePath);
+
+            string[] words = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string word in words)
+            {
+                string cleanedWord = word.Trim(',', '.', '«', '»');
+                if (knownCities.Contains(cleanedWord))
+                {
+                    return cleanedWord;
+                }
+            }
+
+            return null;
         }
 
         // Извлечение информации о товарах
@@ -243,14 +267,11 @@ namespace ExcelToWord
                             Word.Range productNameRun = productNameParagraph.Range;
                             productNameRun.Text = "Наименование: ";
                             cityRun.Font.Size = 24;
+                            productNameRun.Collapse(Word.WdCollapseDirection.wdCollapseEnd);
+                            productNameRun.InsertAfter($"{productInfo["info"]} {(other != null ? other : string.Empty)}");
+                            productNameRun.Bold = 1;
+                            productNameRun.Font.Size = 28;
                             productNameParagraph.Range.InsertParagraphAfter();
-
-                            Word.Paragraph productParagraph = document.Content.Paragraphs.Add();
-                            Word.Range productRun = productParagraph.Range;
-                            productRun.Text = $"{productInfo["info"]} {(other != null ? other : string.Empty)}";
-                            productRun.Bold = 1;
-                            productRun.Font.Size = 28;
-                            productParagraph.Range.InsertParagraphAfter();
 
                             // Габариты
                             if (!string.IsNullOrEmpty(productInfo["dimensions"]))
@@ -316,6 +337,7 @@ namespace ExcelToWord
             document.Close();
             wordApp.Quit();
             excelApp.Quit();
+            City = null;
             Process.Start(filePath);
         }
 
