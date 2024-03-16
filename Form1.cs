@@ -4,12 +4,8 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.ComponentModel;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using Word = Microsoft.Office.Interop.Word;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -22,6 +18,7 @@ namespace ExcelToWord
     {
         public string SelectedFilePath;
         public string City;
+        public string DeliveryLetter;
 
         public iron66()
         {
@@ -35,23 +32,64 @@ namespace ExcelToWord
             return match.Success ? match.Groups[1].Value : null;
         }
 
+        // Извлечение буквы, соответствующей типу доставки
+        private string ExtractDeliveryLetter(Excel.Worksheet sheet)
+        {
+            int startRow = 11;
+            int currentRow = startRow;
+            dynamic productTextCell = sheet.Cells[currentRow, 7].Value;
+            while (productTextCell != null)
+            {
+                currentRow++;
+                productTextCell = sheet.Cells[currentRow, 7].Value;
+            }
+
+            currentRow++;
+            productTextCell = sheet.Cells[currentRow, 2].Value;
+            string letterText = (productTextCell != null) ? productTextCell.ToString() : string.Empty;
+
+            for (int i = 0; i < 11; i++)
+            {
+                if (letterText != "")
+                {
+                    if (letterText.Contains("ТК") || letterText.Contains("тк") || letterText.Contains("Тк") ||
+                        letterText.Contains("Самовывоз") || letterText.Contains("самовывоз") || letterText.Contains("САМОВЫВОЗ"))
+                    {
+                        DeliveryLetter = "Т";
+                        return DeliveryLetter;
+                    }
+                }
+
+                currentRow++;
+                productTextCell = sheet.Cells[currentRow, 2].Value;
+                letterText = (productTextCell != null) ? productTextCell.ToString() : string.Empty;
+            }
+
+            DeliveryLetter = "Н/Д";
+            return DeliveryLetter;
+        }
+
+
         // Извлечение информации о доставке
-        private string ExtractDeliveryInfo(string text, dynamic deliveryInfo)
+        private string ExtractDeliveryInfo(string text, dynamic deliveryInfo, Excel.Worksheet sheet)
         {
             string cityText = deliveryInfo;
+            if (DeliveryLetter != null)
+            {
+                return DeliveryLetter;
+            }
+
             if (cityText.Contains("Бравиум") || cityText.Contains("БРАВИУМ") ||
             cityText.Contains("Меделия") || cityText.Contains("МЕДЕЛИЯ") ||
             cityText.Contains("ДСД Проект") || cityText.Contains("Зерц") ||
             cityText.Contains("Бурдонов"))
             {
                 City = "Москва";
-                return "М";
+                DeliveryLetter = "M";
+                return DeliveryLetter;
             }
-            else
-            {
-                Match match = Regex.Match(text, @"\.(.*?)$");
-                return match.Success ? match.Groups[1].Value.Trim() : null;
-            }
+
+            else return ExtractDeliveryLetter(sheet);
         }
 
         // Извлечение информации о заказчике
@@ -60,6 +98,7 @@ namespace ExcelToWord
             return text.Split(',')[0].Trim();
         }
 
+        // Чтение списка городов
         private List<string> LoadCitiesFromFile(string filePath)
         {
             List<string> cities = new List<string>();
@@ -77,8 +116,14 @@ namespace ExcelToWord
             return cities;
         }
 
+        // Извлечение информации о городе
         private string ExtractCityInfo(string text)
         {
+            if (City == "Москва")
+            {
+                return "Москва";
+            }
+
             string citiesFilePath = "City.txt"; // Путь к файлу с городами
             List<string> knownCities = LoadCitiesFromFile(citiesFilePath);
 
@@ -205,7 +250,7 @@ namespace ExcelToWord
                 string order_str = (orderStrCell != null) ? orderStrCell.ToString() : string.Empty;
 
                 order_id = ExtractOrderId(order_id_str);
-                string delivery_info = ExtractDeliveryInfo(order_id_str, sheet.Cells[7, 6].Value);
+                string delivery_info = ExtractDeliveryInfo(order_id_str, sheet.Cells[7, 6].Value, sheet);
                 string customer = ExtractCustomer(order_str);
                 string city_info = ExtractCityInfo(order_str);
                 int quantityColumn = FindQuantityColumn(sheet);
@@ -338,6 +383,7 @@ namespace ExcelToWord
             wordApp.Quit();
             excelApp.Quit();
             City = null;
+            DeliveryLetter = null;
             Process.Start(filePath);
         }
 
