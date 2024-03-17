@@ -20,6 +20,7 @@ namespace ExcelToWord
         public string SelectedFilePath;
         public string City;
         public string DeliveryLetter;
+        public string FileName;
         private List<string> SelectedFilePaths = new List<string>();
 
         public iron66()
@@ -199,6 +200,7 @@ namespace ExcelToWord
                     return cell.Column;
                 }
             }
+
             return -1;
         }
 
@@ -239,7 +241,6 @@ namespace ExcelToWord
 
             // Переход вправо, учитывая объединение ячеек
             otherCell = otherCell.MergeArea[otherCell.MergeArea.Rows.Count, otherCell.MergeArea.Columns.Count];
-            Console.WriteLine(otherCell.Text);
             otherCell = sheet.Cells[otherCell.Row, otherCell.Column + 1];
 
             if (otherCell.Value == null)
@@ -365,6 +366,7 @@ namespace ExcelToWord
                             document.Application.Selection.InsertBreak(ref breakTypePage);
                         }
                     }
+
                     currentRow++;
                 }
                 else
@@ -374,26 +376,26 @@ namespace ExcelToWord
                     selection.EndKey(Word.WdUnits.wdStory);
                     selection.MoveLeft(Word.WdUnits.wdCharacter, 2);
                     selection.Delete();
+
                     break;
                 }
             }
 
             // Получение ячейки, которая находится на 2 пункта ниже таблицы
             Excel.Range belowCell = sheet.Cells[currentRow + 3, 2];
-            Console.WriteLine(belowCell.Text);
 
             string excelFileName = Path.GetFileNameWithoutExtension(excelFilePath);
-            string outputFileName = $"{excelFileName}.docx";
+            FileName = $"{excelFileName}.docx";
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            string filePath = Path.Combine(desktopPath, outputFileName);
+            string fileDir = Path.Combine(desktopPath, FileName);
 
-            document.SaveAs(filePath);
+            document.SaveAs(fileDir);
             document.Close();
             wordApp.Quit();
             excelApp.Quit();
             City = null;
             DeliveryLetter = null;
-            Process.Start(filePath);
+            // Process.Start(filePath); Открытие документа по завершении обработки
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -422,10 +424,12 @@ namespace ExcelToWord
                 System.Media.SystemSounds.Asterisk.Play();
 
                 // Создаем экземпляр формы CustomMessageBox и передаем сообщение
-                CustomMessageBox customMessageBox = new CustomMessageBox();
+                CustomMessageBox customMessageBox = new CustomMessageBox(FileName);
 
                 // Отображаем окно модально (асинхронно)
                 customMessageBox.ShowDialog();
+
+                FileName = null;
             }
         }
 

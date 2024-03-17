@@ -12,9 +12,10 @@ namespace ExcelToWord
 {
     public partial class CustomMessageBox : Form
     {
-        public CustomMessageBox()
+        public CustomMessageBox(string fileName)
         {
             InitializeComponent();
+            label2.Text = fileName; // Устанавливаем имя файла в поле label2
 
             this.StartPosition = FormStartPosition.CenterScreen;
             this.TopMost = true;
@@ -39,6 +40,11 @@ namespace ExcelToWord
         private void button1_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
