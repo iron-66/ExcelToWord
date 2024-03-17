@@ -183,7 +183,7 @@
     <value>0</value>
   </data>
   <data name="uploadBtn.Text" xml:space="preserve">
-    <value>Выберите файл</value>
+    <value>Выберите файлы</value>
   </data>
   <data name="&gt;&gt;uploadBtn.Name" xml:space="preserve">
     <value>uploadBtn</value>
@@ -251,11 +251,17 @@
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>6, 13</value>
   </data>
+  <data name="$this.AutoScroll" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="$this.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>431, 147</value>
+    <value>431, 142</value>
   </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>447, 186</value>
+    <value>447, 600</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
     <value>447, 153</value>

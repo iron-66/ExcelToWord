@@ -43,7 +43,6 @@ namespace ExcelToWord
             resources.ApplyResources(this.processBtn, "processBtn");
             this.processBtn.Name = "processBtn";
             this.processBtn.UseVisualStyleBackColor = true;
-            this.processBtn.Click += new System.EventHandler(this.processBtn_Click);
             // 
             // openFileDialog1
             // 
@@ -65,6 +64,7 @@ namespace ExcelToWord
             // 
             // fileDirLabel
             // 
+            this.fileDirLabel.AutoEllipsis = true;
             resources.ApplyResources(this.fileDirLabel, "fileDirLabel");
             this.fileDirLabel.Name = "fileDirLabel";
             this.fileDirLabel.Click += new System.EventHandler(this.fileDirLabel_Click);

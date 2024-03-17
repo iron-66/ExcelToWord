@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Word = Microsoft.Office.Interop.Word;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Threading.Tasks;
 
 
 
@@ -19,10 +20,12 @@ namespace ExcelToWord
         public string SelectedFilePath;
         public string City;
         public string DeliveryLetter;
+        private List<string> SelectedFilePaths = new List<string>();
 
         public iron66()
         {
             InitializeComponent();
+            this.processBtn.Click += new System.EventHandler(async (sender, e) => await processBtn_ClickAsync(sender, e));
         }
 
         // Извлечение номера заказа
@@ -129,12 +132,16 @@ namespace ExcelToWord
 
             string[] words = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-            foreach (string word in words)
+            // Отсекаем первые 6 и последние 3 слова
+            words = words.Skip(6).Take(words.Length - 9).ToArray();
+
+            string shortenedText = string.Join(" ", words);
+
+            foreach (string knownCity in knownCities)
             {
-                string cleanedWord = word.Trim(',', '.', '«', '»');
-                if (knownCities.Contains(cleanedWord))
+                if (shortenedText.Contains(knownCity))
                 {
-                    return cleanedWord;
+                    return knownCity;
                 }
             }
 
@@ -373,11 +380,13 @@ namespace ExcelToWord
 
             // Получение ячейки, которая находится на 2 пункта ниже таблицы
             Excel.Range belowCell = sheet.Cells[currentRow + 3, 2];
-            Console.WriteLine(belowCell.Text);          
+            Console.WriteLine(belowCell.Text);
 
-            string outputFileName = $"Заказ {order_id}.docx";
+            string excelFileName = Path.GetFileNameWithoutExtension(excelFilePath);
+            string outputFileName = $"{excelFileName}.docx";
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string filePath = Path.Combine(desktopPath, outputFileName);
+
             document.SaveAs(filePath);
             document.Close();
             wordApp.Quit();
@@ -392,31 +401,46 @@ namespace ExcelToWord
             
         }
 
-        private void processBtn_Click(object sender, EventArgs e)
+        private async Task processBtn_ClickAsync(object sender, EventArgs e)
         {
-            ReadExcelAndCreateWordDocument(SelectedFilePath);
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = SelectedFilePaths.Count + 1;
+            progressBar1.Value = 0;
+            progressBar1.Value++;
 
-            // Проиграть звук оповещения
-            System.Media.SystemSounds.Asterisk.Play();
+            foreach (string filePath in SelectedFilePaths)
+            {
+                await Task.Run(() =>
+                {
+                    ReadExcelAndCreateWordDocument(filePath);
+                });
 
-            // Создаем экземпляр формы CustomMessageBox и передаем сообщение
-            CustomMessageBox customMessageBox = new CustomMessageBox();
+                // Обновляем состояние полосы загрузки
+                progressBar1.Value++;
 
-            // Отображаем окно
-            customMessageBox.Show();
+                // Проигрываем звук оповещения
+                System.Media.SystemSounds.Asterisk.Play();
+
+                // Создаем экземпляр формы CustomMessageBox и передаем сообщение
+                CustomMessageBox customMessageBox = new CustomMessageBox();
+
+                // Отображаем окно модально (асинхронно)
+                customMessageBox.ShowDialog();
+            }
         }
 
         private void uploadBtn_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Title = "Выберите файл";
+            openFileDialog.Title = "Выберите файлы";
             openFileDialog.Filter = "Excel таблица (*.xls;*.xlsx)|*.xls;*.xlsx|Все файлы (*.*)|*.*";
+            openFileDialog.Multiselect = true; // Разрешить выбирать несколько файлов
             DialogResult result = openFileDialog.ShowDialog();
 
             if (result == DialogResult.OK)
             {
-                SelectedFilePath = openFileDialog.FileName;
-                fileDirLabel.Text = SelectedFilePath;
+                SelectedFilePaths = openFileDialog.FileNames.ToList();
+                fileDirLabel.Text = string.Join(Environment.NewLine, SelectedFilePaths);
                 processBtn.Enabled = true;
             }
         }
