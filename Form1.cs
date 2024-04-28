@@ -86,7 +86,10 @@ namespace ExcelToWord
             if (cityText.Contains("Бравиум") || cityText.Contains("БРАВИУМ") ||
             cityText.Contains("Меделия") || cityText.Contains("МЕДЕЛИЯ") ||
             cityText.Contains("ДСД Проект") || cityText.Contains("Зерц") ||
-            cityText.Contains("Бурдонов"))
+            cityText.Contains("Бурдонов") ||
+            cityText.Contains("ЭУР МЕД") || cityText.Contains("Эур Мед") ||
+            cityText.Contains("Валидус") || cityText.Contains("ВАЛИДУС") ||
+            cityText.Contains("Валидус-ДМ") || cityText.Contains("ВАЛИДУС-ДМ"))
             {
                 City = "Москва";
                 DeliveryLetter = "M";
@@ -204,10 +207,11 @@ namespace ExcelToWord
             return -1;
         }
 
+        // Чтение Excel таблицы и создание Word документа
         private void ReadExcelAndCreateWordDocument(string excelFilePath)
         {
             Excel.Application excelApp = new Excel.Application();
-            Excel.Workbook workbook = excelApp.Workbooks.Open(excelFilePath);
+            Excel.Workbook workbook = excelApp.Workbooks.Open(excelFilePath, ReadOnly: true);
             Excel.Worksheet sheet = workbook.ActiveSheet;
 
             // Создание документа Word
@@ -390,7 +394,7 @@ namespace ExcelToWord
             string fileDir = Path.Combine(desktopPath, FileName);
 
             document.SaveAs(fileDir);
-            document.Close();
+            document.Close(false);
             wordApp.Quit();
             excelApp.Quit();
             City = null;
